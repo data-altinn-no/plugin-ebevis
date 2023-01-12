@@ -3,13 +3,11 @@
   "Values": {
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
-
-
     "DefaultCircuitBreakerOpenCircuitTimeSeconds": "10",
     "DefaultCircuitBreakerFailureBeforeTripping": "4",
     "SafeHttpClientTimeout": "30",
-
-    "EndpointUrl": "https://example.com"
-
+    "ES_BREndpointUrl": "",
+    "FunctionKeyName": "",
+    "FunctionKeyValue": ""
   }
 }
