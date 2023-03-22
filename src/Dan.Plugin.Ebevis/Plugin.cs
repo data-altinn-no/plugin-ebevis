@@ -24,6 +24,7 @@ public class Plugin
     private readonly ILogger _logger;
     private readonly HttpClient _client;
     private readonly ApplicationSettings _settings;
+    private readonly IEntityRegistryService _entityRegistryService;
 
     // These are not mandatory, but there should be a distinct error code (any integer) for all types of errors that can occur. The error codes does not have to be globally
     // unique. These should be used within either transient or permanent exceptions, see Plugin.cs for examples.
@@ -31,17 +32,20 @@ public class Plugin
     private const int ERROR_INVALID_INPUT = 1002;
     private const int ERROR_NOT_FOUND = 1003;
     private const int ERROR_UNABLE_TO_PARSE_RESPONSE = 1004;
+    private const string EBEVIS = "eBevis";
 
     public Plugin(
         IHttpClientFactory httpClientFactory,
         ILoggerFactory loggerFactory,
         IOptions<ApplicationSettings> settings,
-        IEvidenceSourceMetadata evidenceSourceMetadata)
+        IEvidenceSourceMetadata evidenceSourceMetadata,
+        IEntityRegistryService entityRegistryService)
     {
         _client = httpClientFactory.CreateClient(Constants.SafeHttpClient);
         _logger = loggerFactory.CreateLogger<Plugin>();
         _settings = settings.Value;
         _evidenceSourceMetadata = evidenceSourceMetadata;
+        _entityRegistryService = entityRegistryService;
     }
 
     [Function("CriterionSelectionSuitabilityTradeRegisterEnrolment")]
@@ -182,23 +186,121 @@ public class Plugin
         return await EvidenceSourceResponse.CreateResponse(req, () => GetDataFromES_BR(evidenceHarvesterRequest));
     }
 
+    [Function("BilpleieregisteretEbevis")]
+    public async Task<HttpResponseData> BilpleieregisteretEbevis(
+        [HttpTrigger(AuthorizationLevel.Function, "post", Route = "BilpleieregisteretEbevis")]
+        HttpRequestData req, FunctionContext context)
+    {
+        var evidenceHarvesterRequest = await req.ReadFromJsonAsync<EvidenceHarvesterRequest>();
+        return await EvidenceSourceResponse.CreateResponse(req, () => GetBilpleieData(evidenceHarvesterRequest));
+    }
+
+    private async Task<List<EvidenceValue>> GetBilpleieData(EvidenceHarvesterRequest evidenceHarvesterRequest)
+    {
+        var taskList = new List<Task<List<EvidenceValue>>>();
+
+        taskList.Add(getDataFromES_ARBT(evidenceHarvesterRequest, "Bilpleieregisteret"));
+        taskList.Add(getDataFromES_SVV(evidenceHarvesterRequest, "Verkstedregisteret"));
+        await Task.WhenAll(taskList);
+        return UnifyBilpleie(taskList);
+    }
+
+    private List<EvidenceValue> UnifyBilpleie(List<Task<List<EvidenceValue>>> taskList)
+    {
+        string orgnr = string.Empty;
+        string godkjenningArbt = string.Empty;
+        string registerstatusArbt = string.Empty;
+        string godkjenningSVV = string.Empty;
+        string godkjenningsnrSVV = string.Empty;
+        bool approvedEbevis = false;
+
+        foreach (var task in taskList )
+        {
+            var evidenceList = task.Result;
+            //task has values
+            if (evidenceList.Any(x => x.EvidenceValueName == "organisasjonsnummer"))
+            {
+                //task is arbt or svv
+                if (evidenceList.Any(x => x.Source == "Arbeidstilsynet"))
+                {
+                    godkjenningArbt = evidenceList.First(x => x.EvidenceValueName == "godkjenningsstatus").Value.ToString();
+                    orgnr = evidenceList.First(x => x.EvidenceValueName == "organisasjonsnummer").Value.ToString();
+                    registerstatusArbt = evidenceList.First(x => x.EvidenceValueName == "registerstatusTekst").Value.ToString();
+                }
+                else if (evidenceList.Any(x => x.Source == "Statens vegvesen"))
+                {
+                    orgnr = evidenceList.First(x => x.EvidenceValueName == "organisasjonsnummer").Value.ToString();
+                    godkjenningSVV = evidenceList.First(x => x.EvidenceValueName == "godkjenningstyper").Value.ToString();
+                    godkjenningsnrSVV = evidenceList.First(x => x.EvidenceValueName == "godkjenningsnumre").Value.ToString();
+                }
+            }
+        }
+
+        approvedEbevis = godkjenningArbt.ToLower().Equals("godkjent") || godkjenningSVV.Length > 5;
+
+        var ecb = new EvidenceBuilder(_evidenceSourceMetadata, "BilpleieregisteretEbevis");
+        ecb.AddEvidenceValue("organisasjonsnummer", orgnr, EBEVIS, false);
+        ecb.AddEvidenceValue("godkjenningsstatusArbeidstilsynet", godkjenningArbt, "");
+        ecb.AddEvidenceValue("registerstatusArbeidstilsynet", registerstatusArbt, ""); 
+        ecb.AddEvidenceValue("godkjenningsstatusStatensVegvesen", godkjenningSVV, "");
+        ecb.AddEvidenceValue("godkjenningsnumreStatensVegvesen", godkjenningsnrSVV, "");
+        ecb.AddEvidenceValue("godkjentEbevis", approvedEbevis, EBEVIS);
+        return ecb.GetEvidenceValues();
+    }
+
     private async Task<List<EvidenceValue>> GetDataFromES_BR(EvidenceHarvesterRequest evidenceHarvesterRequest)
     {
         string uri = _settings.ES_BREndpointUrl + evidenceHarvesterRequest.EvidenceCodeName + AddAuthorizationKey();
         return await GetDataFromOtherPlugin(evidenceHarvesterRequest, uri);
     }
 
-    private async Task<List<EvidenceValue>> GetDataFromOtherPlugin(EvidenceHarvesterRequest evidenceHarvesterRequest, string uri)
+    private async Task<List<EvidenceValue>> getDataFromES_SVV(EvidenceHarvesterRequest evidenceHarvesterRequest, string evidenceCodeName)
     {
-        StringContent content = new StringContent(JsonConvert.SerializeObject(evidenceHarvesterRequest), Encoding.UTF8, "application/json");
+        string uri = _settings.ES_SVVEndpointUrl + evidenceCodeName + AddAuthorizationKey();
+        evidenceHarvesterRequest.EvidenceCodeName = evidenceCodeName;
 
-        var request = new HttpRequestMessage(HttpMethod.Post, uri);
-        request.Headers.TryAddWithoutValidation("Content-Type", "application/json");
-        request.Content = content;
+        return await GetDataFromOtherPlugin(evidenceHarvesterRequest, uri, true);
+    }
+    private async Task<List<EvidenceValue>> getDataFromES_ARBT(EvidenceHarvesterRequest evidenceHarvesterRequest, string evidenceCodeName)
+    {
+        //ARBT only uses main units, so we switch the subject
+        string uri = _settings.ES_ARBTEndpointUrl + evidenceCodeName + AddAuthorizationKey();
+        var mainUnit = await _entityRegistryService.Get(evidenceHarvesterRequest.SubjectParty.NorwegianOrganizationNumber, false, true, false);
+        evidenceHarvesterRequest.EvidenceCodeName = evidenceCodeName;
+        evidenceHarvesterRequest.OrganizationNumber = mainUnit != null ? mainUnit.OrganizationNumber : evidenceHarvesterRequest.SubjectParty.NorwegianOrganizationNumber;
+        evidenceHarvesterRequest.SubjectParty = new Party()
+        {
+            NorwegianOrganizationNumber = mainUnit != null ? mainUnit.OrganizationNumber : evidenceHarvesterRequest.SubjectParty.NorwegianOrganizationNumber
+        };
 
-        var response = await _client.SendAsync(request);
-        var responseContent = await response.Content.ReadAsStringAsync();
-        return JsonConvert.DeserializeObject<List<EvidenceValue>>(responseContent);
+        return await GetDataFromOtherPlugin(evidenceHarvesterRequest, uri, true);
+    }
+
+    private async Task<List<EvidenceValue>> GetDataFromOtherPlugin(EvidenceHarvesterRequest evidenceHarvesterRequest, string uri, bool meh = false)
+    {
+        try
+        {
+            StringContent content = new StringContent(JsonConvert.SerializeObject(evidenceHarvesterRequest), Encoding.UTF8, "application/json");
+
+            var request = new HttpRequestMessage(HttpMethod.Post, uri);
+            request.Headers.TryAddWithoutValidation("Content-Type", "application/json");
+            request.Content = content;
+
+            var response = await _client.SendAsync(request);
+            var responseContent = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<List<EvidenceValue>>(responseContent);
+        }
+        catch (Exception)
+        {
+            //For bilpleie one of the plugins will return exception based response, so we need to catch and ignore
+            if (meh)
+            {
+                return new List<EvidenceValue>();
+            }
+            else
+                throw;
+        }
+
     }
 
     private string AddAuthorizationKey()

@@ -8,8 +8,8 @@ namespace Dan.Plugin.Ebevis.Config
 
         public string ES_BREndpointUrl { get; set; }
 
-        public string ES_SVVEndpoint { get; set; }
+        public string ES_SVVEndpointUrl { get; set; }
 
-        public string ES_ARBTEndpoint { get; set; }
+        public string ES_ARBTEndpointUrl { get; set; }
     }
 }

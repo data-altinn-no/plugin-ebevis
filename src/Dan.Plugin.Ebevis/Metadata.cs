@@ -18,6 +18,7 @@ namespace Dan.Plugin.Ebevis
         private const string SourceCentralUnitRegistry = "BRREG Enhetsregisteret";
         private const string ARBT = "Arbeidstilsynet";
         private const string SVV = "Statens vegvesen";
+        private const string EBEVIS = "eBevis";
         private List<string> belongsToEbevis = new List<string>() { "eBevis" };
 
         [Function(Constants.EvidenceSourceMetadataFunctionName)]
@@ -291,6 +292,62 @@ namespace Dan.Plugin.Ebevis
                             ValueType = EvidenceValueType.Uri,
                             Source = SourceCentralUnitRegistry
                         },
+                    },
+                    AuthorizationRequirements = new List<Requirement>()
+                    {
+                        new PartyTypeRequirement()
+                        {
+                            AllowedPartyTypes = new AllowedPartyTypesList()
+                            {
+                                new KeyValuePair<AccreditationPartyTypes, PartyTypeConstraint>(AccreditationPartyTypes.Requestor,
+                                    PartyTypeConstraint.PublicAgency)
+                            }
+                        }
+                    }
+                },
+                new EvidenceCode()
+                {
+                    EvidenceCodeName = "BilpleieregisteretEbevis",
+                    Description = "Kombinerer bilpleieregisteret til Arbeidstilsynet og verkstedregisteret til Statens vegvesen",
+                    BelongsToServiceContexts = belongsToEbevis,
+                    Values = new List<EvidenceValue>
+                    {
+                        new ()
+                        {
+                            EvidenceValueName = "organisasjonsnummer",
+                            ValueType = EvidenceValueType.String,
+                            Source = EBEVIS
+                        },
+                        new()
+                        {
+                            EvidenceValueName = "godkjenningsstatusArbeidstilsynet",
+                            ValueType = EvidenceValueType.String,
+                            Source = ARBT,
+                        },
+                        new()
+                        {
+                            EvidenceValueName = "registerstatusArbeidstilsynet",
+                            ValueType = EvidenceValueType.String,
+                            Source = ARBT,
+                        },
+                        new()
+                        {
+                            EvidenceValueName = "godkjenningsstatusStatensVegvesen",
+                            ValueType = EvidenceValueType.String,
+                            Source = SVV,
+                        },
+                        new()
+                        {
+                            EvidenceValueName = "godkjenningsnumreStatensVegvesen",
+                            ValueType = EvidenceValueType.String,
+                            Source = SVV,
+                        },
+                        new()
+                        {
+                            EvidenceValueName = "godkjentEbevis",
+                            ValueType = EvidenceValueType.Boolean,
+                            Source = EBEVIS
+                        }
                     },
                     AuthorizationRequirements = new List<Requirement>()
                     {

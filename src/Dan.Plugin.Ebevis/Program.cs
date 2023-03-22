@@ -23,8 +23,7 @@ namespace Dan.Plugin.Ebevis
                     // Add any additional services here
 
                     // This makes IOption<Settings> available in the DI container.
-                    var configurationRoot = context.Configuration;
-                    services.Configure<ApplicationSettings>(configurationRoot);
+                    services.Configure<ApplicationSettings>(context.Configuration);
 
                 })
                 .Build();
