@@ -3,6 +3,7 @@ using Dan.Common;
 using Dan.Common.Enums;
 using Dan.Common.Interfaces;
 using Dan.Common.Models;
+using Dan.Plugin.Ebevis.Models;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Newtonsoft.Json;
@@ -48,6 +49,13 @@ namespace Dan.Plugin.Ebevis
                             EvidenceValueName = "IsInRegistryOfBusinessEnterprises",
                             ValueType = EvidenceValueType.Boolean,
                             Source = SourceCentralUnitRegistry
+                        },
+                        new EvidenceValue()
+                        {
+                            EvidenceValueName = "default",
+                            ValueType = EvidenceValueType.JsonSchema,
+                            JsonSchemaDefintion = EvidenceValue.SchemaFromObject<TradeRegisterEnrolment>(Formatting.Indented),
+                            Source = SourceCentralUnitRegistry
                         }
                     },
                     AuthorizationRequirements = new List<Requirement>()
@@ -81,6 +89,13 @@ namespace Dan.Plugin.Ebevis
                             ValueType = EvidenceValueType.DateTime,
                             Source = SourceCentralUnitRegistry
                         },
+                        new EvidenceValue()
+                        {
+                            EvidenceValueName = "default",
+                            ValueType = EvidenceValueType.JsonSchema,
+                            JsonSchemaDefintion = EvidenceValue.SchemaFromObject<EconomicFinancialStandingTurnoverSetUp>(Formatting.Indented),
+                            Source = SourceCentralUnitRegistry
+                        }
                     },
                     AuthorizationRequirements = new List<Requirement>()
                     {
@@ -113,6 +128,13 @@ namespace Dan.Plugin.Ebevis
                             ValueType = EvidenceValueType.Uri,
                             Source = SourceCentralUnitRegistry
                         },
+                        new EvidenceValue()
+                        {
+                            EvidenceValueName = "default",
+                            ValueType = EvidenceValueType.JsonSchema,
+                            JsonSchemaDefintion = EvidenceValue.SchemaFromObject<ManagerialStaff>(Formatting.Indented),
+                            Source = SourceCentralUnitRegistry
+                        }
                     },
                     AuthorizationRequirements = new List<Requirement>()
                     {
@@ -145,6 +167,13 @@ namespace Dan.Plugin.Ebevis
                             ValueType = EvidenceValueType.Uri,
                             Source = SourceCentralUnitRegistry
                         },
+                        new EvidenceValue()
+                        {
+                            EvidenceValueName = "default",
+                            ValueType = EvidenceValueType.JsonSchema,
+                            JsonSchemaDefintion = EvidenceValue.SchemaFromObject<ManagerialStaff>(Formatting.Indented),
+                            Source = SourceCentralUnitRegistry
+                        }
                     },
                     AuthorizationRequirements = new List<Requirement>()
                     {
@@ -177,6 +206,13 @@ namespace Dan.Plugin.Ebevis
                             ValueType = EvidenceValueType.Boolean,
                             Source = SourceCentralUnitRegistry
                         },
+                        new EvidenceValue()
+                        {
+                            EvidenceValueName = "default",
+                            ValueType = EvidenceValueType.JsonSchema,
+                            JsonSchemaDefintion = EvidenceValue.SchemaFromObject<BusinessInsolvency>(Formatting.Indented),
+                            Source = SourceCentralUnitRegistry
+                        }
                     },
                     AuthorizationRequirements = new List<Requirement>()
                     {
@@ -203,6 +239,13 @@ namespace Dan.Plugin.Ebevis
                             ValueType = EvidenceValueType.Boolean,
                             Source = SourceCentralUnitRegistry
                         },
+                        new EvidenceValue()
+                        {
+                            EvidenceValueName = "default",
+                            ValueType = EvidenceValueType.JsonSchema,
+                            JsonSchemaDefintion = EvidenceValue.SchemaFromObject<BusinessBankruptcy>(Formatting.Indented),
+                            Source = SourceCentralUnitRegistry
+                        }
                     },
                     AuthorizationRequirements = new List<Requirement>()
                     {
@@ -292,6 +335,13 @@ namespace Dan.Plugin.Ebevis
                             ValueType = EvidenceValueType.Uri,
                             Source = SourceCentralUnitRegistry
                         },
+                        new EvidenceValue()
+                        {
+                            EvidenceValueName = "default",
+                            ValueType = EvidenceValueType.JsonSchema,
+                            JsonSchemaDefintion = EvidenceValue.SchemaFromObject<EconomicFinancialStandingTurnoverGeneralYearly>(Formatting.Indented),
+                            Source = SourceCentralUnitRegistry
+                        }
                     },
                     AuthorizationRequirements = new List<Requirement>()
                     {
@@ -346,6 +396,13 @@ namespace Dan.Plugin.Ebevis
                         {
                             EvidenceValueName = "godkjentEbevis",
                             ValueType = EvidenceValueType.Boolean,
+                            Source = EBEVIS
+                        },
+                        new()
+                        {
+                            EvidenceValueName = "default",
+                            ValueType = EvidenceValueType.JsonSchema,
+                            JsonSchemaDefintion = EvidenceValue.SchemaFromObject<BilpleieregisteretEbevisResult>(Formatting.Indented),
                             Source = EBEVIS
                         }
                     },
