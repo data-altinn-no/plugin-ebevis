@@ -1,4 +1,5 @@
 using System;
+using Newtonsoft.Json;
 
 namespace Dan.Plugin.Ebevis.Models
 {
@@ -60,11 +61,22 @@ namespace Dan.Plugin.Ebevis.Models
     // whose fields do not match what Plugin.cs's UnifyBilpleie actually returns as EvidenceValues.
     public class BilpleieregisteretEbevisResult
     {
+        [JsonProperty("organisasjonsnummer")]
         public string Organisasjonsnummer { get; set; }
+
+        [JsonProperty("godkjenningsstatusArbeidstilsynet")]
         public string GodkjenningsstatusArbeidstilsynet { get; set; }
+
+        [JsonProperty("registerstatusArbeidstilsynet")]
         public string RegisterstatusArbeidstilsynet { get; set; }
+
+        [JsonProperty("godkjenningsstatusStatensVegvesen")]
         public string GodkjenningsstatusStatensVegvesen { get; set; }
+
+        [JsonProperty("godkjenningsnumreStatensVegvesen")]
         public string GodkjenningsnumreStatensVegvesen { get; set; }
+
+        [JsonProperty("godkjentEbevis")]
         public bool GodkjentEbevis { get; set; }
     }
 }
