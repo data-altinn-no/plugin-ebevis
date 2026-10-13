@@ -6,8 +6,11 @@
     "DefaultCircuitBreakerOpenCircuitTimeSeconds": "10",
     "DefaultCircuitBreakerFailureBeforeTripping": "4",
     "SafeHttpClientTimeout": "30",
-    "ES_BREndpointUrl": "",
-    "FunctionKeyName": "",
-    "FunctionKeyValue": ""
+    "DanEnvironment": "dev",
+    "PluginCode": "",
+    "PluginScopes": "",
+    "AZURE_TENANT_ID": "",
+    "AZURE_CLIENT_ID": "",
+    "AZURE_CLIENT_SECRET": ""
   }
 }
