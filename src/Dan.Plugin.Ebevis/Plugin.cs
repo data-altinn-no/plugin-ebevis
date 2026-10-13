@@ -62,8 +62,11 @@ public class Plugin
         _danPluginClientService = danPluginClientService;
         _ccrClientService = ccrClientService;
 
-        // Synthetic (Tenor) organisation numbers are only looked up outside production
-        _ccrClientService.AllowTestCcrLookup = !string.Equals(_settings.DanEnvironment, "prod", StringComparison.OrdinalIgnoreCase);
+        // Synthetic (Tenor) organisation numbers are only looked up in explicitly non-production environments.
+        // Fail closed: a missing or unrecognised DanEnvironment must never enable test lookups.
+        _ccrClientService.AllowTestCcrLookup =
+            string.Equals(_settings.DanEnvironment, "dev", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(_settings.DanEnvironment, "test", StringComparison.OrdinalIgnoreCase);
     }
 
     [Function("CriterionSelectionSuitabilityTradeRegisterEnrolment")]
