@@ -39,7 +39,7 @@ public class Plugin
     private const string BilpleieregisteretEbevisDataset = "BilpleieregisteretEbevis";
 
     // Plugin sources as used in the DAN function app naming convention (func-es{source}-{env}), see DanPluginClientService
-    private const string SourceBr = "br";
+    private const string SourceBr = "brreg";
     private const string SourceSvv = "svv";
     private const string SourceArbt = "arbt";
 
